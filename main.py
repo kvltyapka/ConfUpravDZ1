@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import scrolledtext
-import zipfile
+import tarfile
 import io
 
 virtual_fs = {
@@ -81,22 +81,24 @@ def chmod(path, file, mode):
     if file in dir_content:
         dir_content[file] = mode
 
-def save_to_zip():
+def save_to_tar():
     memory_file = io.BytesIO()
-    with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
-        def add_to_zip(path, zf_path):
+    with tarfile.open(fileobj=memory_file, mode='w') as tar:
+        def add_to_tar(path, tar_path):
             if isinstance(path, dict):
                 for key, value in path.items():
-                    new_path = f"{zf_path}/{key}"
+                    new_path = f"{tar_path}/{key}"
                     if isinstance(value, dict):
-                        add_to_zip(value, new_path)
+                        add_to_tar(value, new_path)
                     else:
-                        zf.writestr(new_path, value)
-        add_to_zip(virtual_fs, "")
+                        tarinfo = tarfile.TarInfo(name=new_path)
+                        tarinfo.size = len(value.encode('utf-8'))
+                        tar.addfile(tarinfo, io.BytesIO(value.encode('utf-8')))
+        add_to_tar(virtual_fs, "")
     memory_file.seek(0)
-    with open("vfs.zip", "wb") as f:
+    with open("vfs.tar", "wb") as f:
         f.write(memory_file.read())
-    return "vfs.zip"
+    return "vfs.tar"
 
 def handle_command(command, output_text):
     if command.startswith("ls"):
@@ -120,8 +122,8 @@ def handle_command(command, output_text):
     output_text.see(tk.END)
 
 def on_closing():
-    zip_file = save_to_zip()
-    output_text.insert(tk.END, f"Virtual file system saved to {zip_file}\n")
+    tar_file = save_to_tar()
+    output_text.insert(tk.END, f"Virtual file system saved to {tar_file}\n")
     root.quit()
 
 if __name__ == "__main__":
