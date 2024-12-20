@@ -75,4 +75,4 @@ chmod: Изменение прав доступа к файлам.
 python test_commands.py
 ```
 
-Тесты проверяют работу команд ls, cd, chown, whoami # Dz
+Тесты проверяют работу команд ls, cd, clear, chmod # Dz
